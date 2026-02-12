@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>45-Day Coding Bootcamp Tracker</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, -apple-system, sans-serif; background: #0a0a0f; color: #e8e8f0; min-height: 100vh; padding-bottom: 3rem; }
+.wrap { max-width: 900px; margin: 0 auto; padding: 0 1rem; }
+
+header { text-align: center; padding: 2rem 1rem 1.5rem; border-bottom: 1px solid #2a2a3a; margin-bottom: 1.5rem; }
+header h1 { font-size: clamp(1.4rem,4vw,2rem); font-weight: 900; background: linear-gradient(135deg,#00f5a0,#00c8ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+header p { color: #6b6b80; font-size: 0.75rem; margin-top: 0.4rem; letter-spacing: 1px; }
+
+.stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 0.7rem; margin-bottom: 1rem; }
+@media(max-width:560px){ .stats { grid-template-columns: repeat(2,1fr); } }
+.stat { background: #111118; border: 1px solid #2a2a3a; border-radius: 10px; padding: 0.85rem 0.5rem; text-align: center; }
+.stat-num { font-size: 1.8rem; font-weight: 900; line-height: 1; }
+.stat-lbl { font-size: 0.58rem; color: #6b6b80; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+.prog-wrap { background: #111118; border: 1px solid #2a2a3a; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+.prog-top { display: flex; justify-content: space-between; margin-bottom: 0.6rem; }
+.prog-lbl { font-size: 0.68rem; color: #6b6b80; text-transform: uppercase; letter-spacing: 1px; }
+.prog-pct { font-size: 1rem; font-weight: 900; color: #00f5a0; }
+.prog-track { height: 8px; background: #1a1a24; border-radius: 99px; overflow: hidden; }
+.prog-fill { height: 100%; background: linear-gradient(90deg,#00f5a0,#00c8ff); border-radius: 99px; transition: width 0.3s; }
+
+.filters { display: flex; gap: 0.45rem; flex-wrap: wrap; margin-bottom: 1.2rem; align-items: center; }
+.flbl { font-size: 0.63rem; color: #6b6b80; text-transform: uppercase; letter-spacing: 1px; margin-right: 2px; }
+.fbtn { background: #111118; border: 1px solid #2a2a3a; color: #6b6b80; padding: 0.35rem 0.85rem; border-radius: 99px; font-size: 0.74rem; cursor: pointer; font-weight: 700; transition: all 0.15s; }
+.fbtn:hover { border-color: #00f5a0; color: #00f5a0; }
+.fbtn.active { background: #00f5a0; border-color: #00f5a0; color: #000; }
+.fbtn.sun.active { background: #ff6b6b; border-color: #ff6b6b; color: #fff; }
+
+.phase { margin-bottom: 1rem; border: 1px solid #2a2a3a; border-radius: 12px; overflow: hidden; background: #111118; }
+.phase-hd { padding: 0.9rem 1.1rem; background: #1a1a24; display: flex; align-items: center; gap: 0.65rem; cursor: pointer; user-select: none; border-bottom: 1px solid #2a2a3a; }
+.pdot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.ptitle { flex: 1; font-weight: 800; font-size: 0.88rem; }
+.pcnt { font-size: 0.63rem; color: #6b6b80; }
+.parr { color: #6b6b80; font-size: 0.65rem; transition: transform 0.25s; display: inline-block; }
+.phase.closed .parr { transform: rotate(-90deg); }
+.phase.closed .phase-body { display: none; }
+.phase.closed .phase-hd { border-bottom: none; }
+.phase-body { padding: 0.6rem; }
+
+.day { margin-bottom: 0.4rem; border: 1px solid #1e1e2e; border-radius: 8px; overflow: hidden; background: #0a0a0f; }
+.day.sunday { border-color: rgba(255,107,107,0.3); }
+.day.alldone { opacity: 0.6; }
+.day-hd { padding: 0.6rem 0.9rem; background: #111118; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; user-select: none; }
+.day.sunday .day-hd { background: rgba(255,107,107,0.07); }
+.dnum { font-size: 0.63rem; color: #6b6b80; font-weight: 800; min-width: 44px; }
+.dtitle { flex: 1; font-size: 0.78rem; font-weight: 700; }
+.sbadge { background: rgba(255,107,107,0.2); color: #ff6b6b; font-size: 0.53rem; font-weight: 800; padding: 0.1rem 0.38rem; border-radius: 4px; text-transform: uppercase; }
+.dcnt { font-size: 0.62rem; font-weight: 800; color: #6b6b80; }
+.dcnt.full { color: #00f5a0; }
+.darr { color: #6b6b80; font-size: 0.63rem; transition: transform 0.2s; display: inline-block; }
+.day.closed .darr { transform: rotate(-90deg); }
+.day.closed .tasks { display: none; }
+
+.tasks { padding: 0.4rem 0.6rem 0.6rem; }
+
+/* TASK ROW */
+.task {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.4rem 0.45rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.task:hover { background: #1a1a24; }
+
+/* CUSTOM CHECKBOX BOX */
+.chk-box {
+  width: 17px;
+  height: 17px;
+  min-width: 17px;
+  border-radius: 4px;
+  border: 2px solid #555566;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+  transition: all 0.15s;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+.task.ticked .chk-box {
+  background: #00f5a0;
+  border-color: #00f5a0;
+}
+.chk-tick {
+  display: none;
+  font-size: 11px;
+  font-weight: 900;
+  color: #000;
+  line-height: 1;
+}
+.task.ticked .chk-tick { display: block; }
+
+.cat-tag { font-size: 0.53rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; padding: 0.12rem 0.35rem; border-radius: 3px; flex-shrink: 0; margin-top: 2px; pointer-events: none; }
+.task-lbl { font-size: 0.77rem; flex: 1; line-height: 1.4; pointer-events: none; color: #e8e8f0; }
+.task.ticked .task-lbl { text-decoration: line-through; color: #555566; }
+.task-dur { font-size: 0.59rem; color: #6b6b80; background: #1a1a24; padding: 0.11rem 0.36rem; border-radius: 3px; flex-shrink: 0; margin-top: 2px; pointer-events: none; }
+
+.reset-wrap { text-align: center; padding-top: 1.5rem; }
+.reset-btn { background: transparent; border: 1px solid #2a2a3a; color: #6b6b80; padding: 0.5rem 1.3rem; border-radius: 6px; font-size: 0.7rem; cursor: pointer; font-family: inherit; }
+.reset-btn:hover { border-color: #ff6b6b; color: #ff6b6b; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <h1>45-Day Monika Study Plan Tracker</h1>
+    <p>DSA &nbsp;·&nbsp; Flask &nbsp;·&nbsp; JavaScript &nbsp;·&nbsp; DevOps &nbsp;·&nbsp; Job Hunt &nbsp;|&nbsp; 10 hrs / day</p>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="stats">
+    <div class="stat" style="border-top:2px solid #00f5a0">
+      <div class="stat-num" id="s-tasks" style="color:#00f5a0">0</div>
+      <div class="stat-lbl">Tasks Done</div>
+    </div>
+    <div class="stat" style="border-top:2px solid #00c8ff">
+      <div class="stat-num" id="s-days" style="color:#00c8ff">0</div>
+      <div class="stat-lbl">Days Complete</div>
+    </div>
+    <div class="stat" style="border-top:2px solid #ffd93d">
+      <div class="stat-num" id="s-streak" style="color:#ffd93d">0</div>
+      <div class="stat-lbl">Day Streak</div>
+    </div>
+    <div class="stat" style="border-top:2px solid #ff6b6b">
+      <div class="stat-num" id="s-proj" style="color:#ff6b6b">0/6</div>
+      <div class="stat-lbl">Projects Built</div>
+    </div>
+  </div>
+
+  <div class="prog-wrap">
+    <div class="prog-top">
+      <span class="prog-lbl">Overall Progress</span>
+      <span class="prog-pct" id="s-pct">0%</span>
+    </div>
+    <div class="prog-track">
+      <div class="prog-fill" id="prog-fill" style="width:0%"></div>
+    </div>
+  </div>
+
+  <div class="filters">
+    <span class="flbl">Filter:</span>
+    <button class="fbtn active" data-f="all">All Days</button>
+    <button class="fbtn"        data-f="p1">Phase 1</button>
+    <button class="fbtn"        data-f="p2">Phase 2</button>
+    <button class="fbtn"        data-f="p3">Phase 3</button>
+    <button class="fbtn sun"    data-f="sun">🚀 Sundays</button>
+  </div>
+
+  <div id="main"></div>
+
+  <div class="reset-wrap">
+    <button class="reset-btn" id="reset-btn">↺ Reset All Progress</button>
+  </div>
+
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+var PHASES = [
+  { id:"p1", label:"Phase 1 — Foundations",  range:[1,15],  color:"#00f5a0" },
+  { id:"p2", label:"Phase 2 — Intermediate", range:[16,30], color:"#00c8ff" },
+  { id:"p3", label:"Phase 3 — Advanced",     range:[31,45], color:"#ffd93d" }
+];
+
+var SUN_PROJ = {
+  7:  { title:"Todo App",               desc:"Flask REST API + Vanilla JS SPA with full CRUD" },
+  14: { title:"Auth System",            desc:"JWT auth backend + React login/register UI" },
+  21: { title:"Real-Time Chat",         desc:"Flask-SocketIO + JS frontend, Dockerized & deployed" },
+  28: { title:"E-Commerce Dashboard",   desc:"Product/cart/order API + React UI + Stripe checkout" },
+  35: { title:"Blog CMS Platform",      desc:"WYSIWYG CMS, Next.js SSR frontend, AWS S3 media" },
+  42: { title:"Job App Tracker (Capstone)", desc:"Full-stack: track jobs, contacts, interviews — deploy" }
+};
+
+var DSA    = ["Arrays & Strings","Two Pointers","Sliding Window","Hashing & HashMaps","Linked Lists","Stacks & Queues","Recursion Basics","Binary Search","Merge & Quick Sort","Trees: BFS & DFS","Binary Search Trees","Heaps & Priority Queues","Graphs: Adjacency List","Graph BFS/DFS","Trie","DP: Memoization","DP: Knapsack","DP: Subsequences","Backtracking Basics","N-Queens / Sudoku","Dijkstra's Algorithm","Topological Sort","Union-Find","Segment Trees","Bit Manipulation","Greedy Algorithms","Interval Problems","Matrix Traversal","Advanced Trees","Timed Revision","DP: State Compression","Bellman-Ford","Floyd-Warshall","KMP Algorithm","Rabin-Karp","Monotonic Stack","Fenwick Tree","Advanced Backtracking","Mock Interview Easy","Mock Interview Medium","Mock Interview Hard","System Design Intro","System Design: URL Shortener","Competitive Problem Set","Final Revision Sprint"];
+var FLASK  = ["Project Structure & Routes","Blueprints & HTTP Methods","Request/Response & JSON","SQLAlchemy & Migrations","CRUD: Users","CRUD: Resources","JWT Auth Basics","Register & Login Routes","Middleware & Error Handlers","REST Best Practices","Testing with pytest","Postman / HTTPie","Environment Config","Pagination & Filtering","File Uploads","Flask-Caching","Rate Limiting","Flask-SocketIO Intro","Celery Background Tasks","DB Relationships","Flask-Admin Panel","OAuth2 (Google)","API Versioning","Marshmallow Serialization","Swagger / OpenAPI Docs","Integration Tests","Performance Profiling","Deploy to Render/Heroku","Docker + Flask","Flask + Redis","Microservices Intro","Service Communication","RabbitMQ Basics","Flask + Elasticsearch","GraphQL / Ariadne","Advanced JWT & Refresh","Role-Based Access Control","Advanced PostgreSQL","Multi-Tenant Architecture","Flask Perf Tuning","Security: CORS/CSRF/XSS","API Monetization","Flask + Stripe","Full API Integration","OpenAPI Export"];
+var JS     = ["JS Fundamentals Review","DOM Manipulation","Event Listeners","Fetch API & Promises","Async/Await","ES6+: Destructuring/Spread","Modules (import/export)","Error Handling","Local/Session Storage","Array & Object Methods","Closures & Scope","Prototypes & Classes","Regex in JS","DevTools Debugging","Form Validation","Vanilla SPA Routing","Component Architecture","State Management Patterns","Canvas API","Web Workers","Service Workers & PWA","WebSockets Client","Chart.js Visualization","Drag & Drop API","Intersection Observer","Lazy Loading & Perf","Node.js & npm Basics","Express.js REST API","File System Module","JWT in Node/Express","React Fundamentals","useContext & useReducer","React Router v6","React + Fetch / SWR","Testing: Jest & RTL","TypeScript Basics","TypeScript + React","Next.js Intro","SSR vs CSR vs SSG","React Performance","React Native Intro","GraphQL Client / Apollo","HOC & Render Props","CI/CD for JS Apps","Final JS Integration"];
+var DEVOPS = ["Linux CLI: Navigation & Files","Linux: Permissions & Processes","Shell Scripting Basics","Git: Branching & Rebasing","Docker: Images & Containers","Docker Compose","GitHub Actions Basics","GitHub Actions: Deploy","Nginx Reverse Proxy","SSL/TLS with Let's Encrypt","AWS EC2 + S3 Intro","AWS RDS & Config","Monitoring: Prometheus","Logging: ELK Stack","Terraform Intro"];
+
+var CAT_STYLE = {
+  dsa:    { bg:"rgba(0,245,160,0.15)",   fg:"#00f5a0" },
+  flask:  { bg:"rgba(255,107,107,0.15)", fg:"#ff9999" },
+  js:     { bg:"rgba(255,217,61,0.15)",  fg:"#ffd93d" },
+  devops: { bg:"rgba(0,200,255,0.15)",   fg:"#00c8ff" },
+  review: { bg:"rgba(180,180,220,0.12)", fg:"#aaaacc" },
+  jobs:   { bg:"rgba(200,150,255,0.15)", fg:"#cc99ff" },
+  project:{ bg:"rgba(255,107,107,0.2)",  fg:"#ff6b6b" }
+};
+
+function getDayTasks(day) {
+  var i = day - 1;
+  var isSun = (day % 7 === 0);
+  var proj = SUN_PROJ[day];
+  if (isSun && proj) {
+    return [
+      { cat:"review",  time:"30m", text:"Review & consolidate the week's learning — notes & flashcards" },
+      { cat:"project", time:"3h",  text:"Project Planning: " + proj.title + " — architecture & component breakdown" },
+      { cat:"project", time:"2h",  text:"Backend: " + proj.desc },
+      { cat:"project", time:"2h",  text:"Frontend: Build UI, wire up API, test all endpoints" },
+      { cat:"project", time:"1h",  text:"Deploy to production & write README documentation" },
+      { cat:"jobs",    time:"30m", text:"Update portfolio with new project + submit 2 job applications" }
+    ];
+  }
+  return [
+    { cat:"review",  time:"30m",  text:"Review Day " + Math.max(1,day-1) + " notes — redo 1 tricky problem" },
+    { cat:"dsa",     time:"1h",   text:"DSA Theory: " + (DSA[i] || "Mixed Revision") },
+    { cat:"dsa",     time:"1.5h", text:"DSA Practice: 3 LeetCode problems (1 easy + 2 medium)" },
+    { cat:"dsa",     time:"1.5h", text:"DSA Hard: 1 hard problem + full solution walkthrough" },
+    { cat:"flask",   time:"1h",   text:"Flask: " + (FLASK[i] || "API Feature") + " — theory & setup" },
+    { cat:"flask",   time:"1h",   text:"Flask: Build & test the feature hands-on" },
+    { cat:"js",      time:"1h",   text:"JS: " + (JS[i] || "Advanced Topic") + " — code-along" },
+    { cat:"js",      time:"1h",   text:"JS: Build a mini-demo / exercise for today's concept" },
+    { cat:"devops",  time:"45m",  text:"DevOps: " + DEVOPS[i % DEVOPS.length] },
+    { cat:"jobs",    time:"1h",   text:"Job Apps: Submit as many applications as you can in 1hr " }
+  ];
+}
+
+// ── STORAGE ───────────────────────────────────────────────────────────────────
+var store = {};
+try { store = JSON.parse(localStorage.getItem("bc45v4") || "{}"); } catch(e) { store = {}; }
+
+function saveStore() {
+  try { localStorage.setItem("bc45v4", JSON.stringify(store)); } catch(e) {}
+}
+
+function isOn(d, t) {
+  return store["d" + d + "_t" + t] === true;
+}
+
+// ── TOGGLE — updates DOM in-place, NO re-render ───────────────────────────────
+function toggleTask(d, t) {
+  var key = "d" + d + "_t" + t;
+  store[key] = !store[key];
+  saveStore();
+
+  // Find the exact task element and flip its visual state
+  var el = document.querySelector('.task[data-d="' + d + '"][data-t="' + t + '"]');
+  if (el) {
+    var on = store[key];
+    el.classList.toggle("ticked", on);
+  }
+
+  updateDayCounter(d);
+  updateStats();
+}
+
+// ── BUILD DOM (runs once) ─────────────────────────────────────────────────────
+function build() {
+  var main = document.getElementById("main");
+  var html = "";
+
+  for (var pi = 0; pi < PHASES.length; pi++) {
+    var ph = PHASES[pi];
+    var s = ph.range[0], e = ph.range[1];
+
+    html += '<div class="phase" data-phase="' + ph.id + '">';
+    html += '<div class="phase-hd" onclick="togglePhase(this.parentElement)">';
+    html += '<div class="pdot" style="background:' + ph.color + ';box-shadow:0 0 8px ' + ph.color + '"></div>';
+    html += '<div class="ptitle" style="color:' + ph.color + '">' + ph.label + '</div>';
+    html += '<div class="pcnt" id="pc-' + ph.id + '"></div>';
+    html += '<span class="parr">&#9660;</span>';
+    html += '</div>';
+    html += '<div class="phase-body">';
+
+    for (var day = s; day <= e; day++) {
+      var tasks = getDayTasks(day);
+      var isSun = (day % 7 === 0);
+      var proj  = SUN_PROJ[day];
+      var closedClass = day > 1 ? " closed" : "";
+
+      html += '<div class="day' + (isSun ? " sunday" : "") + closedClass + '" data-day="' + day + '" data-sun="' + (isSun ? 1 : 0) + '" data-phase="' + ph.id + '">';
+      html += '<div class="day-hd" onclick="toggleDay(this.parentElement)">';
+      html += '<span class="dnum">DAY ' + (day < 10 ? "0" + day : day) + '</span>';
+      html += '<span class="dtitle">' + (isSun && proj ? "&#128640; " + proj.title : "DSA &nbsp;&#183;&nbsp; Flask &nbsp;&#183;&nbsp; JS &nbsp;&#183;&nbsp; DevOps &nbsp;&#183;&nbsp; Jobs") + '</span>';
+      if (isSun) html += '<span class="sbadge">Project Day</span>';
+      html += '<span class="dcnt" id="dc-' + day + '"></span>';
+      html += '<span class="darr">&#9660;</span>';
+      html += '</div>';
+      html += '<div class="tasks">';
+
+      for (var ti = 0; ti < tasks.length; ti++) {
+        var t  = tasks[ti];
+        var on = isOn(day, ti);
+        var cs = CAT_STYLE[t.cat] || CAT_STYLE.review;
+        html += '<div class="task' + (on ? " ticked" : "") + '" data-d="' + day + '" data-t="' + ti + '" onclick="toggleTask(' + day + ',' + ti + ')">';
+        html += '<div class="chk-box"><span class="chk-tick">&#10003;</span></div>';
+        html += '<span class="cat-tag" style="background:' + cs.bg + ';color:' + cs.fg + '">' + t.cat + '</span>';
+        html += '<span class="task-lbl">' + t.text + '</span>';
+        html += '<span class="task-dur">' + t.time + '</span>';
+        html += '</div>';
+      }
+
+      html += '</div></div>'; // .tasks, .day
+    }
+
+    html += '</div></div>'; // .phase-body, .phase
+  }
+
+  main.innerHTML = html;
+
+  // Initial counters & stats
+  for (var d = 1; d <= 45; d++) updateDayCounter(d);
+  updateStats();
+}
+
+function togglePhase(el) { el.classList.toggle("closed"); }
+function toggleDay(el)   { el.classList.toggle("closed"); }
+
+// ── COUNTERS & STATS ──────────────────────────────────────────────────────────
+function updateDayCounter(day) {
+  var tasks = getDayTasks(day);
+  var done  = 0;
+  for (var ti = 0; ti < tasks.length; ti++) { if (isOn(day, ti)) done++; }
+  var all = (done === tasks.length);
+  var el  = document.getElementById("dc-" + day);
+  if (el) { el.textContent = done + "/" + tasks.length; el.className = "dcnt" + (all ? " full" : ""); }
+  var card = document.querySelector('.day[data-day="' + day + '"]');
+  if (card) card.classList.toggle("alldone", all);
+}
+
+function updateStats() {
+  var total = 0, done = 0, daysDone = 0, streak = 0, projDone = 0;
+
+  for (var d = 1; d <= 45; d++) {
+    var tasks = getDayTasks(d);
+    var allDone = true;
+    for (var ti = 0; ti < tasks.length; ti++) {
+      total++;
+      if (isOn(d, ti)) done++;
+      else allDone = false;
+    }
+    if (allDone) daysDone++;
+  }
+
+  for (var d2 = 45; d2 >= 1; d2--) {
+    var t2 = getDayTasks(d2);
+    var ok = true;
+    for (var ti2 = 0; ti2 < t2.length; ti2++) { if (!isOn(d2, ti2)) { ok = false; break; } }
+    if (ok) streak++; else break;
+  }
+
+  var sunDays = Object.keys(SUN_PROJ);
+  for (var si = 0; si < sunDays.length; si++) {
+    var sd = +sunDays[si];
+    var st = getDayTasks(sd);
+    var allDoneSun = true;
+    for (var sti = 0; sti < st.length; sti++) { if (!isOn(sd, sti)) { allDoneSun = false; break; } }
+    if (allDoneSun) projDone++;
+  }
+
+  // Phase counts
+  for (var pi = 0; pi < PHASES.length; pi++) {
+    var ph = PHASES[pi];
+    var el = document.getElementById("pc-" + ph.id);
+    if (!el) continue;
+    var pt = 0, pd = 0;
+    for (var dd = ph.range[0]; dd <= ph.range[1]; dd++) {
+      var tt = getDayTasks(dd);
+      for (var tti = 0; tti < tt.length; tti++) { pt++; if (isOn(dd, tti)) pd++; }
+    }
+    el.innerHTML = '<span style="color:' + ph.color + '">' + pd + '</span> / ' + pt + ' tasks';
+  }
+
+  var pct = total ? Math.round(done / total * 100) : 0;
+  document.getElementById("s-tasks").textContent  = done;
+  document.getElementById("s-days").textContent   = daysDone;
+  document.getElementById("s-streak").textContent = streak;
+  document.getElementById("s-proj").textContent   = projDone + "/6";
+  document.getElementById("s-pct").textContent    = pct + "%";
+  document.getElementById("prog-fill").style.width = pct + "%";
+}
+
+// ── FILTERS ───────────────────────────────────────────────────────────────────
+var currentFilter = "all";
+
+document.querySelectorAll(".fbtn").forEach(function(btn) {
+  btn.addEventListener("click", function() {
+    document.querySelectorAll(".fbtn").forEach(function(b) { b.classList.remove("active"); });
+    btn.classList.add("active");
+    currentFilter = btn.getAttribute("data-f");
+    applyFilter(currentFilter);
+  });
+});
+
+function applyFilter(f) {
+  document.querySelectorAll(".phase").forEach(function(ph) {
+    ph.style.display = (f === "all" || f === "sun" || ph.getAttribute("data-phase") === f) ? "" : "none";
+  });
+  document.querySelectorAll(".day").forEach(function(day) {
+    if (f === "sun") { day.style.display = day.getAttribute("data-sun") === "1" ? "" : "none"; }
+    else { day.style.display = ""; }
+  });
+}
+
+// ── RESET ─────────────────────────────────────────────────────────────────────
+document.getElementById("reset-btn").addEventListener("click", function() {
+  if (!confirm("Reset ALL progress? This cannot be undone.")) return;
+  store = {};
+  saveStore();
+  build();
+});
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+build();
+</script>
+</body>
+</html>
